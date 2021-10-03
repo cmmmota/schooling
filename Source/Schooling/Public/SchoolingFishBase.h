@@ -28,7 +28,7 @@ protected:
 	float TraceLength = 500;
 
 	UPROPERTY(Category = "Collision", EditAnywhere)
-	float NumberOfTraces = 12;
+	float NumberOfTraces = 18;
 
 	UPROPERTY(Category = "Schooling", EditAnywhere)
 	FString GroupName = TEXT("Default");
@@ -75,9 +75,15 @@ protected:
 	
 	TArray<FVector> CollisionConeVectors;
 
+	FVector LastCollisionAvoidanceVector;
+
 	FTimerHandle TriggerUpdateAccelerationTimerHandle;
 
 	FTimerHandle TriggerUpdateDirectionTimerHandle;
+
+	bool PitchBias = false;
+
+	bool YawBias = false;
 
 public:	
 	// Called every frame
@@ -92,6 +98,8 @@ public:
 	virtual void SetAccelerationTimer();
 
 	virtual void SetDirectionalTimer();
+
+	virtual void ResetDirectionalTimer();
 
 	virtual void SetRandomDirection();
 
@@ -115,6 +123,8 @@ public:
 
 	virtual int GetRandomFromRange(int min, int max);
 
+	virtual bool Chance(int outOf);
+
 	virtual void CheckCollisions(int numberOfTraces, FVector startLocation, FVector actorForwardVector,  TArray<FVector>& missedVectors, TArray<FVector>& hitVectors);
 
 	virtual bool CheckCollision(FVector startLocation, FVector endLocation, FVector& hitStart);
@@ -127,5 +137,5 @@ public:
 
 	virtual FVector SelectFarthestVector(FVector location, TArray<FVector> vectors);
 
-	virtual void ChangeDirectionTowardVector(FVector vector);
+	virtual void ChangeDirectionTowardVector(FVector start, FVector target);
 };

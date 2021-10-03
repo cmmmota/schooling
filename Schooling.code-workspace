@@ -10,39 +10,7 @@
 		}
 	],
 	"settings": {
-		"typescript.tsc.autoDetect": "off",
-		"files.associations": {
-			"array": "cpp",
-			"chrono": "cpp",
-			"deque": "cpp",
-			"filesystem": "cpp",
-			"format": "cpp",
-			"forward_list": "cpp",
-			"initializer_list": "cpp",
-			"list": "cpp",
-			"regex": "cpp",
-			"valarray": "cpp",
-			"vector": "cpp",
-			"xhash": "cpp",
-			"xiosbase": "cpp",
-			"xstring": "cpp",
-			"xtree": "cpp",
-			"xutility": "cpp",
-			"__bit_reference": "cpp",
-			"__hash_table": "cpp",
-			"__split_buffer": "cpp",
-			"__tree": "cpp",
-			"hash_map": "cpp",
-			"hash_set": "cpp",
-			"ios": "cpp",
-			"iterator": "cpp",
-			"map": "cpp",
-			"set": "cpp",
-			"string": "cpp",
-			"string_view": "cpp",
-			"unordered_map": "cpp",
-			"unordered_set": "cpp"
-		}
+		"typescript.tsc.autoDetect": "off"
 	},
 	"extensions": {
 		"recommendations": [
