@@ -2,6 +2,7 @@
 
 #include "SchoolingFishBase.h"
 #include "DrawDebugHelpers.h"
+#include "Kismet/KismetMathLibrary.h"
 
 // Sets default values
 ASchoolingFishBase::ASchoolingFishBase()
@@ -32,9 +33,9 @@ void ASchoolingFishBase::BeginPlay()
 {
 	Super::BeginPlay();
 
-	this->SetAccelerationTimer();
+	// this->SetAccelerationTimer();
 
-	this->SetDirectionalTimer();
+	// this->SetDirectionalTimer();
 }
 
 // Called every frame
@@ -88,9 +89,15 @@ bool ASchoolingFishBase::OffsetForCollisions(float DeltaTime)
 	FVector hitStart;
 	if (this->CheckCollision(start, start + actorForwardVector * this->TraceLength, hitStart))
 	{
+		FVector selectedVector = FVector::ZeroVector;
+
+		if (!LastCollisionAvoidanceVector.IsZero())
+		{
+			selectedVector = this->LastCollisionAvoidanceVector;
+		}
+
 		this->CheckCollisions(this->NumberOfTraces, start, actorForwardVector, missedVectors, hitVectors);
 
-		FVector selectedVector;
 		//If we're in route of collision with any of the traces, select one of the traces that didn't hit
 		// If all the traces hit, select the trace that hit the farthest
 		if (hitVectors.Num() > 0)
@@ -105,19 +112,35 @@ bool ASchoolingFishBase::OffsetForCollisions(float DeltaTime)
 			}
 
 			DrawDebugLine(GetWorld(), start, selectedVector, FColor::Yellow);
-
-			this->ChangeDirectionTowardVector(selectedVector);
 		}
 
-		return true;
+		if (!selectedVector.IsZero())
+		{
+			this->ChangeDirectionTowardVector(start, selectedVector);
+			this->LastCollisionAvoidanceVector = selectedVector;
+
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+	else
+	{
+		this->Pitch = 0;
+		this->Yaw = 0;
+		LastCollisionAvoidanceVector = FVector::ZeroVector;
 	}
 
 	return false;
 }
 
-void ASchoolingFishBase::ChangeDirectionTowardVector(FVector vector)
+void ASchoolingFishBase::ChangeDirectionTowardVector(FVector start, FVector target)
 {
+	FVector forward = (target - start);
 
+	UKismetMathLibrary::GetYawPitchFromVector(forward, this->Yaw, this->Pitch);
 }
 
 FVector ASchoolingFishBase::SelectFarthestVector(FVector location, TArray<FVector> vectors)
@@ -125,13 +148,13 @@ FVector ASchoolingFishBase::SelectFarthestVector(FVector location, TArray<FVecto
 	FVector selectedVector = location;
 	float selectedDistance = 0.0f;
 
-	for(int index = 0; index < vectors.Num(); index++)
+	for (int index = 0; index < vectors.Num(); index++)
 	{
 		FVector currentVector = vectors[index];
 
 		float distance = FVector::Dist(location, currentVector);
-		
-		if(distance > selectedDistance)
+
+		if (distance > selectedDistance)
 		{
 			selectedDistance = distance;
 			selectedVector = currentVector;
@@ -156,7 +179,7 @@ void ASchoolingFishBase::CheckCollisions(int numberOfTraces, FVector startLocati
 	{
 		FVector vector = this->CollisionConeVectors[index];
 
-		FVector endLocation = startLocation + (actorForwardVector * vector) * this->TraceLength;
+		FVector endLocation = startLocation + (actorForwardVector + vector) * this->TraceLength;
 
 		FVector hitStart;
 		if (this->CheckCollision(startLocation, endLocation, hitStart))
@@ -252,6 +275,13 @@ void ASchoolingFishBase::SetDirectionalTimer()
 	GetWorld()->GetTimerManager().SetTimer(TriggerUpdateDirectionTimerHandle, this, &ASchoolingFishBase::SetRandomDirection, countdownStart, false);
 }
 
+void ASchoolingFishBase::ResetDirectionalTimer()
+{
+	GetWorld()->GetTimerManager().ClearTimer(TriggerUpdateDirectionTimerHandle);
+
+	this->SetDirectionalTimer();
+}
+
 void ASchoolingFishBase::SetRandomAcceleration()
 {
 	// if (this->Acceleration != 0 && this->GetRandomFromRange(0, 2) >= 1)
@@ -271,24 +301,24 @@ void ASchoolingFishBase::SetRandomAcceleration()
 
 void ASchoolingFishBase::SetRandomDirection()
 {
-	if ((this->Pitch > 0) && this->GetRandomFromRange(0, 1) >= 0.3f)
+	if (this->Chance(3))
 	{
-		this->Pitch = 0 - this->Pitch;
+		this->Pitch = 0;
 	}
 	else
 	{
 		float randomPitchChange = this->GetRandomFromRange(0 - this->PitchStep, this->PitchStep);
-		this->Pitch += randomPitchChange;
+		this->Pitch = randomPitchChange;
 	}
 
-	if ((this->Yaw > 0) && this->GetRandomFromRange(0, 1) >= 0.3f)
+	if (this->Chance(3))
 	{
-		this->Yaw = 0 - this->Yaw;
+		this->Yaw = 0;
 	}
 	else
 	{
 		float randomYawChange = this->GetRandomFromRange(0 - this->YawStep, this->YawStep);
-		this->Yaw += randomYawChange;
+		this->Yaw = randomYawChange;
 	}
 
 	GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Orange, FString::Printf(TEXT("Set pitch to %g!"), this->Pitch));
@@ -305,4 +335,9 @@ float ASchoolingFishBase::GetRandomFromRange(float min, float max)
 int ASchoolingFishBase::GetRandomFromRange(int min, int max)
 {
 	return FMath::RandRange(min, max);
+}
+
+bool ASchoolingFishBase::Chance(int outOf)
+{
+	return FMath::RandRange(1, outOf) == outOf;
 }
